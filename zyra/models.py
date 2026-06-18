@@ -19,13 +19,13 @@ DTYPE = torch.float16 if torch.cuda.is_available() else torch.float32
 
 # Processing model: multimodal vision-language model (llama.cpp / GGUF via mmproj).
 # 4 bit quantized gemma 4 E4B
-PROCESSING_MODEL_REPO = "google/gemma-4-E4B-it-qat-q4_0-gguf"
-PROCESSING_MODEL_FILE = "gemma-4-E4B_q4_0-it.gguf"
-PROCESSING_MMPROJ_FILE = "gemma-4-E4B-it-mmproj.gguf"
+# PROCESSING_MODEL_REPO = "google/gemma-4-E4B-it-qat-q4_0-gguf"
+# PROCESSING_MODEL_FILE = "gemma-4-E4B_q4_0-it.gguf"
+# PROCESSING_MMPROJ_FILE = "gemma-4-E4B-it-mmproj.gguf"
 # 4 bit quantized gemma 4 12B
-# PROCESSING_MODEL_REPO = "google/gemma-4-12B-it-qat-q4_0-gguf"
-# PROCESSING_MODEL_FILE = "gemma-4-12b-it-qat-q4_0.gguf"
-# PROCESSING_MMPROJ_FILE = "mmproj-gemma-4-12b-it-qat-q4_0.gguf"
+PROCESSING_MODEL_REPO = "google/gemma-4-12B-it-qat-q4_0-gguf"
+PROCESSING_MODEL_FILE = "gemma-4-12b-it-qat-q4_0.gguf"
+PROCESSING_MMPROJ_FILE = "mmproj-gemma-4-12b-it-qat-q4_0.gguf"
 # whisper-large-v3-turbo
 ASR_MODEL_REPO = "openai/whisper-large-v3-turbo"
 # Kokoro-82M

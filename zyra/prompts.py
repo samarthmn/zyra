@@ -10,7 +10,7 @@ Rules:
   scientific_name to null and confidence_percent below 50.
 - If the photo is not clear enough to identify the plant, set needs_more_info to true and
   ask only for a single clearer photo in more_info_request.
-- If the user asks a question about plant care, answer it directly in response (1-2 sentences).
+- If the user asks a question about plant care, answer it directly in response (2-3 sentences).
 - If the user does not ask anything (just a photo), do NOT give care advice. Instead, briefly
   describe the plant and share one interesting fact about it in response.
 - When a Trefle match is found, response will be refined with verified botanical data.
@@ -32,7 +32,7 @@ botanical data. Translate technical values into practical, easy-to-understand no
 
 Rules:
 - Ground your response in the Trefle data provided. Do not invent facts not supported by it.
-- Keep the response to 1-2 short, clear sentences.
+- Keep the response to 2-3 short, clear sentences.
 - If the user asked a care question, answer it directly with practical advice (such as
   watering and fertilizing frequency).
 - If the user did not ask anything, describe the plant and share one interesting fact about it.

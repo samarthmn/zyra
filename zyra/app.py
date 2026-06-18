@@ -53,12 +53,31 @@ EMPTY_PLANT_DATA: dict[str, Any] = {
 # --------------------------------------------------------------------------- #
 
 
+def _to_float_mono(audio_array: np.ndarray) -> np.ndarray:
+    """Coerce Gradio audio samples to the mono float32 Whisper expects.
+
+    ``gr.Audio(type="numpy")`` yields int16 PCM (and stereo for some mics).
+    Whisper raises ``TypeError: Expected floating point type ...`` on integer
+    input, so normalise to [-1, 1] float32 and collapse channels to mono.
+    """
+    samples = np.asarray(audio_array)
+    if samples.ndim > 1:
+        samples = samples.mean(axis=1)
+    if np.issubdtype(samples.dtype, np.integer):
+        max_value = np.iinfo(samples.dtype).max
+        return samples.astype(np.float32) / max_value
+    return samples.astype(np.float32)
+
+
 def transcribe_audio(asr_pipeline, audio) -> str:
     """Transcribe a Gradio ``(sample_rate, samples)`` tuple to text."""
     if audio is None:
         return ""
     sample_rate, audio_array = audio
-    result = asr_pipeline({"array": audio_array, "sampling_rate": sample_rate})
+    samples = _to_float_mono(audio_array)
+    if samples.size == 0:
+        return ""
+    result = asr_pipeline({"array": samples, "sampling_rate": sample_rate})
     return result["text"].strip()
 
 
@@ -137,7 +156,9 @@ def format_plant_identification(plant_data: dict[str, Any], trefle=None) -> str:
     if trefle:
         common = trefle.common_name or plant_data.get("common_name") or "Unknown"
         scientific = trefle.scientific_name or "Unknown"
-        confidence = max(int(plant_data.get("confidence_percent") or 0), VERIFIED_CONFIDENCE)
+        confidence = max(
+            int(plant_data.get("confidence_percent") or 0), VERIFIED_CONFIDENCE
+        )
         source = "Verified via Trefle"
     else:
         common = plant_data.get("common_name") or "Unknown"
@@ -168,9 +189,7 @@ def format_response_text(data: dict[str, Any]) -> str:
 _UNKNOWN_INFO = format_plant_identification({})
 
 # Gradio output shape: (audio, response_text, plant_info, reference_image, history).
-Response = tuple[
-    tuple[int, np.ndarray] | None, str, str, np.ndarray | None, list[dict]
-]
+Response = tuple[tuple[int, np.ndarray] | None, str, str, np.ndarray | None, list[dict]]
 
 
 def _identify_plant(
@@ -226,12 +245,18 @@ def _refine_response(
     return refined
 
 
-def respond(models: ZyraModels, image, text, audio, history: list[dict] | None) -> Response:
+def respond(
+    models: ZyraModels, image, text, audio, history: list[dict] | None
+) -> Response:
     """Handle one turn of conversation and produce all UI outputs."""
     history = history or []
 
     user_text = (text or "").strip()
-    spoken_text = transcribe_audio(models.asr, audio)
+    try:
+        spoken_text = transcribe_audio(models.asr, audio)
+    except Exception as exc:
+        error = f"Sorry, I couldn't process the voice recording: {exc}"
+        return None, error, _UNKNOWN_INFO, None, history
     if spoken_text:
         user_text = f"{user_text} {spoken_text}".strip()
 
@@ -258,7 +283,10 @@ def respond(models: ZyraModels, image, text, audio, history: list[dict] | None) 
 
     response_text = format_response_text(plant_data)
     plant_info = format_plant_identification(plant_data, trefle_result)
-    audio_output = synthesize_speech(models.tts, response_text)
+    try:
+        audio_output = synthesize_speech(models.tts, response_text)
+    except Exception:
+        audio_output = None
 
     new_history = [
         *history,
@@ -273,12 +301,22 @@ def respond(models: ZyraModels, image, text, audio, history: list[dict] | None) 
 # Gradio app
 # --------------------------------------------------------------------------- #
 
+ZYRA_CSS = """
+.gradio-container img {
+    object-fit: contain !important;
+}
+"""
+
 
 def build_demo(models: ZyraModels) -> gr.Blocks:
     """Build the Gradio app wired to ``respond`` with ``models`` bound in."""
     handle_request = partial(respond, models)
 
+    INPUT_IMAGE_HEIGHT = 320
+    REFERENCE_IMAGE_HEIGHT = 320
+
     with gr.Blocks(title="Zyra — Plant Care Assistant") as demo:
+        gr.HTML(f"<style>{ZYRA_CSS}</style>")
         gr.Markdown(
             "# Zyra\n"
             "Your multi-modal plant care assistant. Upload a photo, type a question, "
@@ -287,19 +325,28 @@ def build_demo(models: ZyraModels) -> gr.Blocks:
 
         chat_history = gr.State([])
 
-        with gr.Row():
-            with gr.Column():
-                image_input = gr.Image(label="Plant Photo", type="numpy")
+        with gr.Row(equal_height=True):
+            with gr.Column(scale=1, min_width=360):
+                image_input = gr.Image(
+                    label="Plant Photo",
+                    type="numpy",
+                    height=INPUT_IMAGE_HEIGHT,
+                    buttons=["fullscreen"],
+                )
                 text_input = gr.Textbox(
                     label="Question",
                     placeholder="e.g. Why are the leaves turning yellow?",
                 )
                 audio_input = gr.Audio(label="Voice Input", type="numpy")
                 submit_btn = gr.Button("Ask Zyra", variant="primary")
-            with gr.Column():
+            with gr.Column(scale=1, min_width=360):
                 plant_info_output = gr.Textbox(label="Plant Identification", lines=4)
                 text_output = gr.Textbox(label="Zyra's Response", lines=4)
-                reference_image_output = gr.Image(label="Reference Image (Trefle)")
+                reference_image_output = gr.Image(
+                    label="Reference Image (Trefle)",
+                    height=REFERENCE_IMAGE_HEIGHT,
+                    buttons=["download", "fullscreen"],
+                )
                 audio_output = gr.Audio(label="Listen", autoplay=True)
 
         submit_btn.click(
