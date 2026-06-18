@@ -11,14 +11,14 @@ Zyra is a small Gradio app for plant ID and plant-care questions. Upload a photo
 ## Tech
 
 - Python 3.14
-- Gradio for the app UI
+- [Gradio](https://gradio.app/) for the app UI
 - llama.cpp for local GGUF inference
-- Quantized Gemma 4 for plant ID, image understanding, and care answers
-- Whisper Large v3 Turbo for speech-to-text
-- Kokoro 82M for text-to-speech
-- Trefle API for botanical lookup and tool calling
+- Quantized Gemma 4 ([12B](https://huggingface.co/google/gemma-4-12B-it-qat-q4_0-gguf) / [E4B](https://huggingface.co/google/gemma-4-E4B-it-qat-q4_0-gguf)) for plant ID, image understanding, and care answers
+- [Whisper Large v3 Turbo](https://huggingface.co/openai/whisper-large-v3-turbo) for speech-to-text
+- [Kokoro 82M](https://huggingface.co/hexgrad/Kokoro-82M) for text-to-speech
+- [Trefle API](https://trefle.io/) for botanical lookup and tool calling
 
-The plant reasoning model is local. Use quantized `gemma-4-12B` when you want better answers and can wait a bit longer. Switch to quantized `gemma-4-E4B` when you want faster responses and can accept lower accuracy.
+The plant reasoning model is local. Use quantized [`gemma-4-12B`](https://huggingface.co/google/gemma-4-12B-it-qat-q4_0-gguf) when you want better answers and can wait a bit longer. Switch to quantized [`gemma-4-E4B`](https://huggingface.co/google/gemma-4-E4B-it-qat-q4_0-gguf) when you want faster responses and can accept lower accuracy.
 
 ## Run
 
