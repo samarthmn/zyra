@@ -4,7 +4,9 @@ Zyra is a small Gradio app for plant ID and plant-care questions. Upload a photo
 
 ## Demo
 
-Demo video: _coming soon_
+[demo.mov](demo.mov)
+
+> The demo is committed as `demo.mov` in the repo root. To get an inline player on GitHub, drag `demo.mov` into the README via GitHub's web editor — it will replace this link with an `https://github.com/user-attachments/...` URL that embeds the video.
 
 ## Tech
 
